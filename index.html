@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>計算機</title>
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px 0;
+      box-sizing: border-box;
+      text-align: center;
+      font-family: sans-serif;
+      background-color: #1a1a2e;
+    }
+
+    .card {
+      background-color: #ffffff;
+      border-radius: 24px;
+      padding: 40px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+      width: 320px;
+    }
+
+    h1 {
+      margin-top: 0;
+      color: #1a1a2e;
+    }
+
+    .inputs {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    input[type="number"] {
+      flex: 1;
+      width: 0;
+      padding: 12px;
+      font-size: 18px;
+      border: 2px solid #e0e0e0;
+      border-radius: 12px;
+      text-align: center;
+      box-sizing: border-box;
+      transition: border-color 0.2s ease;
+    }
+
+    input[type="number"]:focus {
+      outline: none;
+      border-color: #1a1a2e;
+    }
+
+    .operators {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    button {
+      padding: 14px 0;
+      font-size: 20px;
+      font-weight: bold;
+      color: #ffffff;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: transform 0.15s ease, filter 0.15s ease;
+    }
+
+    button:hover {
+      filter: brightness(1.1);
+      transform: translateY(-2px);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    .btn-add    { background-color: #2196f3; }
+    .btn-sub    { background-color: #f44336; }
+    .btn-mul    { background-color: #4caf50; }
+    .btn-div    { background-color: #ff9800; }
+
+    #expression {
+      min-height: 20px;
+      margin: 0 0 4px;
+      color: #888888;
+      font-size: 16px;
+    }
+
+    #result {
+      /* id="result" の要素のスタイル */
+      font-size: 48px;
+      font-weight: bold;
+      color: #1a1a2e;
+      word-break: break-word;
+    }
+
+    #result.error {
+      color: #f44336;
+      font-size: 24px;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    #result.fade-in {
+      animation: fadeIn 0.4s ease;
+    }
+
+    .use-prev-btn {
+      display: block;
+      width: 100%;
+      margin-top: 16px;
+      padding: 10px 0;
+      font-size: 14px;
+      font-weight: normal;
+      color: #1a1a2e;
+      background-color: #eeeeee;
+      box-sizing: border-box;
+    }
+
+    .use-prev-btn:hover {
+      filter: none;
+      background-color: #dddddd;
+      transform: none;
+    }
+
+    .history-card {
+      margin-top: 20px;
+      text-align: left;
+    }
+
+    .history-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .history-header h2 {
+      margin: 0;
+      font-size: 18px;
+      color: #1a1a2e;
+    }
+
+    #clearHistoryBtn {
+      padding: 6px 12px;
+      font-size: 13px;
+      font-weight: normal;
+      color: #555555;
+      background-color: #eeeeee;
+    }
+
+    #clearHistoryBtn:hover {
+      filter: none;
+      background-color: #dddddd;
+      transform: none;
+    }
+
+    #historyList {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      max-height: 180px;
+      overflow-y: auto;
+    }
+
+    #historyList .history-item {
+      padding: 8px 10px;
+      border-bottom: 1px solid #eeeeee;
+      font-size: 15px;
+      color: #333333;
+    }
+
+    #historyList .history-item:last-child {
+      border-bottom: none;
+    }
+
+    #historyList .history-item.error {
+      color: #f44336;
+    }
+
+    #historyList .history-empty {
+      padding: 8px 10px;
+      color: #999999;
+      font-size: 14px;
+    }
+
+    #historyList .history-item.fade-in {
+      animation: fadeIn 0.4s ease;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <h1>計算機</h1>
+
+    <!-- 数値を入力する欄。type="number" で数字専用の入力欄になる -->
+    <div class="inputs">
+      <input type="number" id="num1" value="0">
+      <input type="number" id="num2" value="0">
+    </div>
+
+    <!-- 演算子ボタン。onclick で押したときに呼ぶ関数と引数を指定 -->
+    <div class="operators">
+      <button class="btn-add" onclick="calculate('+')">+</button>
+      <button class="btn-sub" onclick="calculate('-')">-</button>
+      <button class="btn-mul" onclick="calculate('×')">×</button>
+      <button class="btn-div" onclick="calculate('÷')">÷</button>
+    </div>
+
+    <!-- 計算式全体（例: 3 + 5 = 8）を表示する場所 -->
+    <p id="expression"></p>
+
+    <!-- 計算結果を表示する場所。id をつけてJSから操作できるようにする -->
+    <p id="result">ここに結果が表示されます</p>
+
+    <!-- 前回の計算結果を左の入力欄にセットするボタン。最初は非表示 -->
+    <button id="usePrevBtn" class="use-prev-btn" onclick="usePreviousResult()" style="display: none;">前の結果を使う</button>
+  </div>
+
+  <!-- 計算履歴セクション。最新から順に5件まで表示する -->
+  <div class="card history-card">
+    <div class="history-header">
+      <h2>計算履歴</h2>
+      <button id="clearHistoryBtn" onclick="clearHistory()">履歴をクリア</button>
+    </div>
+    <ul id="historyList"></ul>
+  </div>
+
+  <script>
+    // ── 計算履歴 ──────────────────────────────────────────────────
+    // 最新の計算が先頭にくるように保存する（最大5件）
+    let history = [];
+
+    function addToHistory(text, isError) {
+      history.unshift({ text: text, isError: isError });
+      if (history.length > 5) {
+        history.pop();
+      }
+      renderHistory();
+    }
+
+    function renderHistory() {
+      const listEl = document.getElementById('historyList');
+      listEl.innerHTML = '';
+
+      if (history.length === 0) {
+        const emptyLi = document.createElement('li');
+        emptyLi.className = 'history-empty';
+        emptyLi.textContent = 'まだ履歴がありません';
+        listEl.appendChild(emptyLi);
+        return;
+      }
+
+      history.forEach(function (item) {
+        const li = document.createElement('li');
+        li.className = 'history-item fade-in' + (item.isError ? ' error' : '');
+        li.textContent = item.text;
+        listEl.appendChild(li);
+      });
+    }
+
+    function clearHistory() {
+      history = [];
+      renderHistory();
+    }
+
+    // ── 前の結果を使う / Enterキー対応 ──────────────────────────────
+    let lastResult = null;     // 直前の（エラーでない）計算結果
+    let lastOperator = '+';    // Enterキーが押されたときに使う演算子
+
+    // 小数点以下が長くなる場合は小数点第3位で四捨五入する
+    function formatNumber(value) {
+      if (typeof value !== 'number') {
+        return value;  // エラーメッセージ（文字列）はそのまま返す
+      }
+      return Math.round(value * 1000) / 1000;
+    }
+
+    function usePreviousResult() {
+      if (lastResult !== null) {
+        document.getElementById('num1').value = lastResult;
+      }
+    }
+
+    function handleEnterKey(event) {
+      if (event.key === 'Enter') {
+        calculate(lastOperator);
+      }
+    }
+
+    document.getElementById('num1').addEventListener('keydown', handleEnterKey);
+    document.getElementById('num2').addEventListener('keydown', handleEnterKey);
+
+    // ── 関数 ──────────────────────────────────────────────────────
+    // calculate = 計算を行う関数。押されたボタンの演算子が引数として渡される
+    function calculate(operator) {
+      lastOperator = operator;  // Enterキーで再計算するときのために覚えておく
+
+      // ── 変数 ──────────────────────────────────────────────────
+      // Number() → 文字列を数値に変換する
+      // document.getElementById('num1').value → id="num1" の入力欄の値を取得
+      let a = Number(document.getElementById('num1').value);
+      let b = Number(document.getElementById('num2').value);
+      let result;  // 計算結果を入れる箱（まだ中身は空）
+      let isError = false;  // 無効な計算のときは true にする
+
+      // ── 条件分岐 ──────────────────────────────────────────────
+      // どの演算子ボタンが押されたかで処理を変える
+      if (operator === '+') {
+        result = a + b;
+      } else if (operator === '-') {
+        result = a - b;
+      } else if (operator === '×') {
+        result = a * b;
+      } else if (operator === '÷') {
+        if (b === 0) {
+          result = 'エラー: 0では割れません';
+          isError = true;
+        } else {
+          result = a / b;
+        }
+      }
+
+      // エラーでなければ、小数点第3位で四捨五入して表示用の値を作る
+      const displayResult = isError ? result : formatNumber(result);
+
+      // 計算式全体（例: 3 + 5 = 8）を表示する
+      const expressionEl = document.getElementById('expression');
+      expressionEl.textContent = isError ? `${a} ${operator} ${b} = ?` : `${a} ${operator} ${b} =`;
+
+      // 計算結果を画面に表示する（DOM操作）
+      const resultEl = document.getElementById('result');
+      resultEl.textContent = displayResult;
+      resultEl.classList.toggle('error', isError);
+
+      // フェードインアニメーションを再生させるため、クラスを一度外してから付け直す
+      resultEl.classList.remove('fade-in');
+      void resultEl.offsetWidth;  // 強制的にリフローさせてアニメーションを再スタートさせる
+      resultEl.classList.add('fade-in');
+
+      // 「前の結果を使う」ボタンの表示を更新する
+      const usePrevBtn = document.getElementById('usePrevBtn');
+      if (!isError) {
+        lastResult = displayResult;
+        usePrevBtn.style.display = 'block';
+      }
+
+      // 計算履歴に追加する
+      addToHistory(`${a} ${operator} ${b} = ${displayResult}`, isError);
+    }
+
+    // 初期表示（履歴が空のときのメッセージを表示）
+    renderHistory();
+  </script>
+
+</body>
+</html>
